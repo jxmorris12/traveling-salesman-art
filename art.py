@@ -9,8 +9,8 @@ from PIL import Image
 def __main__():
     #
     # print "__main__()"
-    image_filename = "homer.jpg"
-    #image_filename = "uva-logo.png"
+    #image_filename = "homer.jpg"
+    image_filename = "uva-logo.png"
     #image_filename = "smiley-grad.png"
     #image_filename = "cross.jpg"
     image = Image.open(image_filename).convert('L')
