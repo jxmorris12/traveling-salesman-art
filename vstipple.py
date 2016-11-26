@@ -5,6 +5,11 @@
 from PIL import Image
 import random
 import math
+
+#
+# global variables
+#
+CENTROIDAL_DIFF_CONVERGENCE_LIMIT = 10
  
 def voronoi_stipple(image):
   #image = Image.new("RGB", (width, height))
@@ -12,11 +17,9 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) / 4
-  iter_limit = num_cells / 20
+  num_cells = (imgx + imgy) * 2
   #
-  print "Creating", num_cells,"stipples via",iter_limit,"iterations."
-  print
+  print "Creating", num_cells,"stipples with convergence point", str(CENTROIDAL_DIFF_CONVERGENCE_LIMIT)+"."
   #
   nx = []
   ny = []
@@ -30,9 +33,18 @@ def voronoi_stipple(image):
     ny.append(random.randrange(imgy))
   #
   #
+  # precompute centroid data
+  ccx = [[0] * imgx for y in range(imgy)]
+  ccy = [[0] * imgx for y in range(imgy)]
+  ccr = [[0] * imgx for y in range(imgy)]
+  for y in range(imgy):
+    for x in range(imgx):
+      p = (1-pixels[x,y]/255.0) # rho
+      ccr[y][x] = p
+      ccx[y][x] = p*x
+      ccy[y][x] = p*y
   # iterate
-  for iterator in range(iter_limit):
-    print "Iteration",iterator+1,"of",str(iter_limit)+"."
+  while True:
     #
     #
     # shade regions
@@ -49,9 +61,10 @@ def voronoi_stipple(image):
     #
     #
     # compute centroids
+    centroidal_delta = 0
     for i in range(num_cells):
-      start_pt = (nx[i],ny[i])
-      q = [start_pt]
+      i_start_pt = (int(nx[i]),int(ny[i]))
+      q = [i_start_pt]
       cx = 0
       cy = 0
       ct = 0.0
@@ -60,12 +73,11 @@ def voronoi_stipple(image):
         pt = q[j]
         j += 1
         nn_x, nn_y = pt
-        if region_data[pt] == region_data[start_pt]:
+        if region_data[pt] == region_data[i_start_pt]:
           # add to centroid
-          rho = (1-pixels[pt]/255.0)
-          cx += nn_x * rho # rho = 1 for now
-          cy += nn_y * rho # " 
-          ct += rho
+          cx += ccx[nn_y][nn_x]
+          cy += ccy[nn_y][nn_x]
+          ct += ccr[nn_y][nn_x]
           # BFS to continue queue
           for cn in cardinal_neighbors(pt):
             if in_bounds(cn, image.size) and cn not in q:
@@ -73,8 +85,16 @@ def voronoi_stipple(image):
       #
       #
       # reset d points
-      nx[i] = int( cx/(ct or 1) )
-      ny[i] = int( cy/(ct or 1) )
+      new_cx = cx / (ct or 1)
+      new_cy = cy / (ct or 1)
+      centroidal_delta += (new_cx-nx[i])**2 + (new_cy-ny[i])**2
+      nx[i] = new_cx
+      ny[i] = new_cy
+    # print difference
+    print "Difference:", str(centroidal_delta) + "."
+    # break if difference below convergence point
+    if centroidal_delta < CENTROIDAL_DIFF_CONVERGENCE_LIMIT:
+      break
   #
   #
   # mark final centroids on diagram
@@ -82,7 +102,7 @@ def voronoi_stipple(image):
     for x in range(imgx):
       putpixel((x, y), 0) # clear image for now
   for i in range(num_cells):
-    pt = (nx[i], ny[i])
+    pt = ( int(nx[i]), int(ny[i]))
     if pt == (0,0): 
       # SHOULD NOT HAPPEN
       continue

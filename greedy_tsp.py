@@ -63,7 +63,6 @@ def connect_dots_with_lines(dots):
     #
     #
     # build upper triangular distance matrix between dots
-    print "Building distance matrix."
     distance_matrix = [[0] * len(dots) for x in range(len(dots))]
     for i in range(len(dots)):
         for j in range(i+1,len(dots)):
@@ -73,10 +72,7 @@ def connect_dots_with_lines(dots):
     #
     #
     # ask for TSP solution
-    print "Built matrix, now computing TSP solution."
     path = solve_tsp( distance_matrix )
-    #
-    print "SOLVED TSP ", path
     #
     #
     # create lines

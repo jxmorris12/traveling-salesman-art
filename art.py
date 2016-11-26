@@ -2,26 +2,27 @@
 # jack morris 11/15/16
 #
 
-from PIL import Image
-import vstipple as stippler
 import greedy_tsp as tsp
+from PIL import Image
+from time import gmtime, strftime
+import vstipple as stippler
 
 def __main__():
     #
-    # print "__main__()"
-    #image_filename = "pics/homer.jpg"
-    image_filename = "pics/uva-logo.png"
-    #image_filename = "pics/smiley-grad.png"
-    #image_filename = "pics/cross.jpg"
+    image_filename = "pics/smiley-grad.png" #-small.png"
     image = Image.open(image_filename).convert('L')
-    print "Stippling image..."
+    #
+    showtime = strftime("%Y%m%d%H%M%S", gmtime())
+    #
     stippled_image = stippler.voronoi_stipple(image)
     stippled_image.show()
+    stippled_image.save("output/s-" + showtime + ".png", "PNG")
+    #
     print "Connecting image dots..."
     tsp_image = tsp.connect_the_dots(stippled_image)
     tsp_image.show()
     # export
-    tsp_image.save("tsp.png", "PNG")
+    tsp_image.save("output/t-" + showtime + ".png", "PNG")
     #
 
 if __name__ == "__main__":
