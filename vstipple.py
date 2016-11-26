@@ -9,7 +9,7 @@ import math
 #
 # global variables
 #
-CENTROIDAL_DIFF_CONVERGENCE_LIMIT = 10
+CENTROIDAL_DIFF_CONVERGENCE_LIMIT = 10**1
  
 def voronoi_stipple(image):
   #image = Image.new("RGB", (width, height))
@@ -17,7 +17,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 2
+  num_cells = (imgx + imgy)
   #
   print "Creating", num_cells,"stipples with convergence point", str(CENTROIDAL_DIFF_CONVERGENCE_LIMIT)+"."
   #
@@ -47,7 +47,10 @@ def voronoi_stipple(image):
   while True:
     #
     #
-    # shade regions
+    # shade regions and add up centroid totals
+    new_cx = [0] * num_cells
+    new_cy = [0] * num_cells
+    new_ct = [0] * num_cells
     for y in range(imgy):
       for x in range(imgx):
         dmin = math.hypot(imgx-1, imgy-1)
@@ -57,39 +60,19 @@ def voronoi_stipple(image):
           if d < dmin:
             dmin = d
             j = i
-        region_data[x,y] = j
+        new_cx[j] += ccx[y][x]
+        new_cy[j] += ccy[y][x]
+        new_ct[j] += ccr[y][x]
+    # 
     #
-    #
-    # compute centroids
+    # compute new centroids
     centroidal_delta = 0
     for i in range(num_cells):
-      i_start_pt = (int(nx[i]),int(ny[i]))
-      q = [i_start_pt]
-      cx = 0
-      cy = 0
-      ct = 0.0
-      j = 0
-      while j < len(q):
-        pt = q[j]
-        j += 1
-        nn_x, nn_y = pt
-        if region_data[pt] == region_data[i_start_pt]:
-          # add to centroid
-          cx += ccx[nn_y][nn_x]
-          cy += ccy[nn_y][nn_x]
-          ct += ccr[nn_y][nn_x]
-          # BFS to continue queue
-          for cn in cardinal_neighbors(pt):
-            if in_bounds(cn, image.size) and cn not in q:
-              q.append(cn)
-      #
-      #
-      # reset d points
-      new_cx = cx / (ct or 1)
-      new_cy = cy / (ct or 1)
-      centroidal_delta += (new_cx-nx[i])**2 + (new_cy-ny[i])**2
-      nx[i] = new_cx
-      ny[i] = new_cy
+      new_cx[i] /= (new_ct[i] or 1)
+      new_cy[i] /= (new_ct[i] or 1)
+      centroidal_delta += math.hypot(new_cx[i]-nx[i],new_cy[i]-ny[i])
+      nx[i] = new_cx[i]
+      ny[i] = new_cy[i]
     # print difference
     print "Difference:", str(centroidal_delta) + "."
     # break if difference below convergence point

@@ -1,5 +1,5 @@
 #
-# jack morris 11/15/16
+# jack morris 11/21/16
 #
 
 from PIL import Image, ImageDraw

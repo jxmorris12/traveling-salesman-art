@@ -6,20 +6,25 @@ import greedy_tsp as tsp
 from PIL import Image
 from time import gmtime, strftime
 import vstipple as stippler
+import dot_stippler
 
 def __main__():
     #
-    image_filename = "pics/smiley-grad.png" #-small.png"
+    image_filename = "pics/smiley.png" 
     image = Image.open(image_filename).convert('L')
     #
     showtime = strftime("%Y%m%d%H%M%S", gmtime())
     #
-    stippled_image = stippler.voronoi_stipple(image)
-    stippled_image.show()
-    stippled_image.save("output/s-" + showtime + ".png", "PNG")
+    dotted_image = stippler.voronoi_stipple(image)
+    dotted_image.show()
+    dotted_image.save("output/d-" + showtime + ".png", "PNG")
+    #
+    # stippled_image = dot_stippler.draw_dots_on(dotted_image.copy())
+    # stippled_image.show()
+    # stippled_image.save("output/s-" + showtime + ".png", "PNG")
     #
     print "Connecting image dots..."
-    tsp_image = tsp.connect_the_dots(stippled_image)
+    tsp_image = tsp.connect_the_dots(dotted_image)
     tsp_image.show()
     # export
     tsp_image.save("output/t-" + showtime + ".png", "PNG")
