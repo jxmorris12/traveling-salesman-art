@@ -3,6 +3,7 @@
 #
 
 import math
+import numpy as np
 from PIL import Image
 import random
 from time import gmtime, strftime
@@ -20,10 +21,10 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 2
+  num_cells = (imgx + imgy) / 2
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
-  print "Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
+  print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
   #
   nx = []
   ny = []
@@ -40,23 +41,25 @@ def voronoi_stipple(image):
   # precompute centroid data
   ccx = [[0] * imgx for y in range(imgy)]
   ccy = [[0] * imgx for y in range(imgy)]
-  cc  = [[0] * imgx for y in range(imgy)]
+  cct = [[0] * imgx for y in range(imgy)]
   #
   for y in range(imgy):
     for x in range(imgx):
       p = 1 - pixels[x,y]/255.0 # rho 
-      cc[y][x] = p
+      cct[y][x] = p
       ccx[y][x] = p*x
       ccy[y][x] = p*y
   #
   clear_image(image.size, putpixel)
   draw_points(zip(nx,ny), putpixel, image.size)
-  image.save("output/test/" + showtime + "-" + str(0) + ".png", "PNG")
+  image.save("output/step/" + showtime + "-" + str(0) + ".png", "PNG")
   # iterate
   new_cx = [0] * num_cells
   new_cy = [0] * num_cells
   new_ct = [0] * num_cells
   iteration = 1
+  resolution = 1
+  hypot = imgx**2 + imgy**2
   while True:
     zero_list( new_cx )
     zero_list( new_cy )
@@ -64,18 +67,30 @@ def voronoi_stipple(image):
     #
     #
     # shade regions and add up centroid totals
-    for y in xrange(imgy):
-      for x in xrange(imgx):
-        dmin = imgx**2 + imgy**2
-        j = None
+    res_step = 1.0 / (2 * resolution)
+    yi = 0
+    for y_step in np.arange(res_step, imgy-res_step, res_step*2):
+      xi = 0
+      y = yi / resolution
+      for x_step in np.arange(res_step, imgx-res_step, res_step*2):
+        x = xi / resolution
+        d_min = hypot
+        i_min = None
         for i in range(num_cells):
           d = (nx[i]-x)**2 + (ny[i]-y)**2
-          if d < dmin:
-            dmin = d
-            j = i
-        new_cx[j] += ccx[y][x]
-        new_cy[j] += ccy[y][x]
-        new_ct[j] += cc[y][x]
+          if d < d_min:
+            d_min = d
+            i_min = i
+        #print "ccx:", len(ccx), "ccx[0]:", len(ccx[0])
+        #print i_min, "cx:", len(new_cx)
+        #print "y_step:", y_step, "x_step:", x_step, "yi:",yi,"xi:",xi
+        #print "y:", y, "x:", x
+        new_cx[i_min] += ccx[y][x]
+        new_cy[i_min] += ccy[y][x]
+        new_ct[i_min] += cct[y][x]
+        xi += 1
+      yi += 1
+
     # 
     #
     # compute new centroids
@@ -92,8 +107,8 @@ def voronoi_stipple(image):
         del ny[i]
         num_cells -= 1
       else:
-        new_cx[i] /= new_ct[i]
-        new_cy[i] /= new_ct[i]
+        new_cx[i] /= float( new_ct[i] )
+        new_cy[i] /= float( new_ct[i] )
         # print "centroidal_delta", centroidal_delta
         centroidal_delta += (new_cx[i]-nx[i])**2 + (new_cy[i]-ny[i])**2
         nx[i] = new_cx[i]
@@ -104,10 +119,13 @@ def voronoi_stipple(image):
     # save a copy of the image (to GIF later)
     clear_image(image.size, putpixel)
     draw_points(zip(nx,ny), putpixel, image.size)
-    image.save("output/test/" + showtime + "-" + str(iteration) + ".png", "PNG")
+    image.save("output/step/" + showtime + "-" + str(iteration) + ".png", "PNG")
     iteration += 1
     # break if difference below convergence point
-    if centroidal_delta < CONVERGENCE_LIMIT:
+    if centroidal_delta == 0.0:
+      resolution *= 2
+      print "(+) Increasing resolution to " + str(resolution) + "x."
+    elif centroidal_delta < CONVERGENCE_LIMIT:
       break
   #
   clear_image(image.size, putpixel)
