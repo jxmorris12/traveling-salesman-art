@@ -1,6 +1,7 @@
 *.pyc
-.DS_Store
+*.DS_Store
 .swp
 .swo
-pics/
+input/
+original-input/
 output/

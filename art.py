@@ -2,15 +2,15 @@
 # jack morris 11/15/16
 #
 
+import dot_stippler
 import greedy_tsp as tsp
 from PIL import Image
 from time import gmtime, strftime
 import vstipple as stippler
-import dot_stippler
 
 def __main__():
     #
-    image_filename = "pics/smiley.png" 
+    image_filename = "input/smiley-grad-small.jpg" 
     image = Image.open(image_filename).convert('L')
     #
     showtime = strftime("%Y%m%d%H%M%S", gmtime())

@@ -2,14 +2,17 @@
 # jack morris 11/08/16
 #
 
+import math
 from PIL import Image
 import random
-import math
+from time import gmtime, strftime
 
 #
 # global variables
 #
-CENTROIDAL_DIFF_CONVERGENCE_LIMIT = 10**1
+NEG_COLOR = 255
+POS_COLOR = 0
+CONVERGENCE_LIMIT = 10**-4
  
 def voronoi_stipple(image):
   #image = Image.new("RGB", (width, height))
@@ -17,9 +20,10 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy)
+  num_cells = (imgx + imgy) * 2
   #
-  print "Creating", num_cells,"stipples with convergence point", str(CENTROIDAL_DIFF_CONVERGENCE_LIMIT)+"."
+  showtime = strftime("%Y%m%d%H%M%S", gmtime())
+  print "Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
   #
   nx = []
   ny = []
@@ -36,66 +40,103 @@ def voronoi_stipple(image):
   # precompute centroid data
   ccx = [[0] * imgx for y in range(imgy)]
   ccy = [[0] * imgx for y in range(imgy)]
-  ccr = [[0] * imgx for y in range(imgy)]
+  cc  = [[0] * imgx for y in range(imgy)]
+  #
   for y in range(imgy):
     for x in range(imgx):
-      p = (1-pixels[x,y]/255.0) # rho
-      ccr[y][x] = p
+      p = 1 - pixels[x,y]/255.0 # rho 
+      cc[y][x] = p
       ccx[y][x] = p*x
       ccy[y][x] = p*y
+  #
+  clear_image(image.size, putpixel)
+  draw_points(zip(nx,ny), putpixel, image.size)
+  image.save("output/test/" + showtime + "-" + str(0) + ".png", "PNG")
   # iterate
+  new_cx = [0] * num_cells
+  new_cy = [0] * num_cells
+  new_ct = [0] * num_cells
+  iteration = 1
   while True:
+    zero_list( new_cx )
+    zero_list( new_cy )
+    zero_list( new_ct )
     #
     #
     # shade regions and add up centroid totals
-    new_cx = [0] * num_cells
-    new_cy = [0] * num_cells
-    new_ct = [0] * num_cells
-    for y in range(imgy):
-      for x in range(imgx):
-        dmin = math.hypot(imgx-1, imgy-1)
-        j = -1
+    for y in xrange(imgy):
+      for x in xrange(imgx):
+        dmin = imgx**2 + imgy**2
+        j = None
         for i in range(num_cells):
-          d = math.hypot(nx[i]-x, ny[i]-y)
+          d = (nx[i]-x)**2 + (ny[i]-y)**2
           if d < dmin:
             dmin = d
             j = i
         new_cx[j] += ccx[y][x]
         new_cy[j] += ccy[y][x]
-        new_ct[j] += ccr[y][x]
+        new_ct[j] += cc[y][x]
     # 
     #
     # compute new centroids
     centroidal_delta = 0
-    for i in range(num_cells):
-      new_cx[i] /= (new_ct[i] or 1)
-      new_cy[i] /= (new_ct[i] or 1)
-      centroidal_delta += math.hypot(new_cx[i]-nx[i],new_cy[i]-ny[i])
-      nx[i] = new_cx[i]
-      ny[i] = new_cy[i]
+    i = 0
+    while i < num_cells:
+      if not new_ct[i]:
+        # all pixels in region have rho = 0
+        # remove centroid
+        del new_cx[i]
+        del new_cy[i]
+        del new_ct[i]
+        del nx[i]
+        del ny[i]
+        num_cells -= 1
+      else:
+        new_cx[i] /= new_ct[i]
+        new_cy[i] /= new_ct[i]
+        # print "centroidal_delta", centroidal_delta
+        centroidal_delta += (new_cx[i]-nx[i])**2 + (new_cy[i]-ny[i])**2
+        nx[i] = new_cx[i]
+        ny[i] = new_cy[i]
+        i += 1
     # print difference
     print "Difference:", str(centroidal_delta) + "."
+    # save a copy of the image (to GIF later)
+    clear_image(image.size, putpixel)
+    draw_points(zip(nx,ny), putpixel, image.size)
+    image.save("output/test/" + showtime + "-" + str(iteration) + ".png", "PNG")
+    iteration += 1
     # break if difference below convergence point
-    if centroidal_delta < CENTROIDAL_DIFF_CONVERGENCE_LIMIT:
+    if centroidal_delta < CONVERGENCE_LIMIT:
       break
   #
-  #
-  # mark final centroids on diagram
-  for y in range(imgy):
-    for x in range(imgx):
-      putpixel((x, y), 0) # clear image for now
-  for i in range(num_cells):
-    pt = ( int(nx[i]), int(ny[i]))
-    if pt == (0,0): 
-      # SHOULD NOT HAPPEN
-      continue
-    putpixel(pt, 255)
+  clear_image(image.size, putpixel)
+  draw_points(zip(nx,ny), putpixel, image.size)
   #
   return image
   #
 
-def in_bounds(point, size):
-    return (point[0] >= 0 and point[0] < size[0]) and (point[1] >= 0 and point[1] < size[1])
+def zero_list(the_list):
+  for x in xrange( len(the_list) ):
+    the_list[x] = 0
 
-def cardinal_neighbors(pt):
-    return [(pt[0]+1,pt[1]), (pt[0],pt[1]-1), (pt[0]-1,pt[1]),(pt[0],pt[1]+1)]
+def clear_image(size, putpixel):
+  #
+  imgx, imgy = size
+  for y in range(imgy):
+    for x in range(imgx):
+      putpixel((x, y), NEG_COLOR) # clear image for now
+  #
+
+def draw_points(points, putpixel, size):
+  #
+  for i in range(len(points)):
+    pt = round_point( points[i] )
+    if pt == (0,0): 
+      # Skip pixels at origin - they'll mess up the stippler
+      continue
+    putpixel(pt, POS_COLOR)
+  #
+
+def round_point(pt):
+  return ( int(round(pt[0])), int(round(pt[1])) )
