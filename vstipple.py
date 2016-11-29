@@ -14,6 +14,7 @@ from time import gmtime, strftime
 NEG_COLOR = 255
 POS_COLOR = 0
 CONVERGENCE_LIMIT = 10**-4
+DEFAULT_RESOLUTION = 2
  
 def voronoi_stipple(image):
   #image = Image.new("RGB", (width, height))
@@ -21,7 +22,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 4
+  num_cells = (imgx + imgy) / 4
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
@@ -42,6 +43,7 @@ def voronoi_stipple(image):
   ccx = [[0] * imgx for y in range(imgy)]
   ccy = [[0] * imgx for y in range(imgy)]
   cct = [[0] * imgx for y in range(imgy)]
+  visited = [[0] * imgx for y in range(imgy)]
   #
   for y in range(imgy):
     for x in range(imgx):
@@ -58,36 +60,37 @@ def voronoi_stipple(image):
   new_cy = [0] * num_cells
   new_ct = [0] * num_cells
   iteration = 1
-  resolution = 1
+  resolution = DEFAULT_RESOLUTION
   max_hypot = imgx**2 + imgy**2
   while True:
     zero_list( new_cx )
     zero_list( new_cy )
     zero_list( new_ct )
+    for x in range(len(visited)): zero_list( visited[x] )
     #
     #
     # shade regions and add up centroid totals
-    res_step = 1.0 / (2 * resolution)
-    yi = 0
-    for y_step in np.arange(0, imgy, res_step*2):
-      xi = 0
-      y = yi / resolution
-      for x_step in np.arange(0, imgx, res_step*2):
-        x = xi / resolution
+    res_step = 1.0 / (resolution)
+    for y_step in np.arange(res_step/2.0, imgy, res_step):
+      y = int( y_step )
+      for x_step in np.arange(res_step/2.0, imgx, res_step):
+        x = int( x_step )
         d_min = max_hypot
         i_min = None
         for i in range(num_cells):
-          d = math.hypot( (nx[i]-x_step) , (ny[i]-y_step) )
+          d = math.hypot(nx[i]-x_step, ny[i]-y_step)
           if d < d_min:
             d_min = d
             i_min = i
         #print (x_step,y_step), (x,y)
-        new_cx[i_min] += ccx[y][x]
-        new_cy[i_min] += ccy[y][x]
-        new_ct[i_min] += cct[y][x]
-        xi += 1
-      yi += 1
+        new_cx[i_min] += ld(ccx[y][x])
+        new_cy[i_min] += ld(ccy[y][x])
+        new_ct[i_min] += ld(cct[y][x])
+        visited[y][x] += 1
 
+    for y in range(imgy):
+      for x in range(imgx):
+        if visited[y][x] != resolution**2: print "!!!!", (x,y), visited[y][x]
     # 
     #
     # compute new centroids
@@ -104,10 +107,10 @@ def voronoi_stipple(image):
         del ny[i]
         num_cells -= 1
       else:
-        new_cx[i] /= float( new_ct[i] )
-        new_cy[i] /= float( new_ct[i] )
+        new_cx[i] /= new_ct[i]
+        new_cy[i] /= new_ct[i]
         # print "centroidal_delta", centroidal_delta
-        centroidal_delta += (new_cx[i]-nx[i])**2 + (new_cy[i]-ny[i])**2
+        centroidal_delta += hypot_square( (new_cx[i]-nx[i]), (new_cy[i]-ny[i]) )
         nx[i] = new_cx[i]
         ny[i] = new_cy[i]
         i += 1
@@ -133,7 +136,7 @@ def voronoi_stipple(image):
 
 def zero_list(the_list):
   for x in xrange( len(the_list) ):
-    the_list[x] = 0
+    the_list[x] = ld(0)
 
 def clear_image(size, putpixel):
   #
@@ -155,3 +158,9 @@ def draw_points(points, putpixel, size):
 
 def round_point(pt):
   return ( int(round(pt[0])), int(round(pt[1])) )
+
+def ld(x):
+  return np.longdouble(x)
+
+def hypot_square( d1, d2 ):
+  return d1**2 + d2**2
