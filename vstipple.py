@@ -48,8 +48,8 @@ def voronoi_stipple(image):
     for x in range(imgx):
       p = 1 - pixels[x,y]/255.0 # rho 
       cct[y][x] = ld( p   )
-      ccx[y][x] = ld( p*x )
-      ccy[y][x] = ld( p*y )
+      ccx[y][x] = ld( p*(x+.5) )
+      ccy[y][x] = ld( p*(y+.5) )
   #
   clear_image(image.size, putpixel)
   draw_points(zip(nx,ny), putpixel, image.size)
