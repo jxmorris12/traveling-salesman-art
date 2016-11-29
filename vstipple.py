@@ -21,7 +21,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 8
+  num_cells = (imgx + imgy) * 4
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
@@ -59,7 +59,7 @@ def voronoi_stipple(image):
   new_ct = [0] * num_cells
   iteration = 1
   resolution = 1
-  hypot = imgx**2 + imgy**2
+  max_hypot = imgx**2 + imgy**2
   while True:
     zero_list( new_cx )
     zero_list( new_cy )
@@ -69,18 +69,19 @@ def voronoi_stipple(image):
     # shade regions and add up centroid totals
     res_step = 1.0 / (2 * resolution)
     yi = 0
-    for y_step in np.arange(res_step, imgy-res_step, res_step*2):
+    for y_step in np.arange(0, imgy, res_step*2):
       xi = 0
       y = yi / resolution
-      for x_step in np.arange(res_step, imgx-res_step, res_step*2):
+      for x_step in np.arange(0, imgx, res_step*2):
         x = xi / resolution
-        d_min = hypot
+        d_min = max_hypot
         i_min = None
         for i in range(num_cells):
-          d = math.hypot( (nx[i]-x) , (ny[i]-y) )
+          d = math.hypot( (nx[i]-x_step) , (ny[i]-y_step) )
           if d < d_min:
             d_min = d
             i_min = i
+        #print (x_step,y_step), (x,y)
         new_cx[i_min] += ccx[y][x]
         new_cy[i_min] += ccy[y][x]
         new_ct[i_min] += cct[y][x]
@@ -121,8 +122,8 @@ def voronoi_stipple(image):
     if centroidal_delta == 0.0:
       resolution *= 2
       print "(+) Increasing resolution to " + str(resolution) + "x."
-    elif centroidal_delta < CONVERGENCE_LIMIT:
-      break
+    #elif centroidal_delta < CONVERGENCE_LIMIT:
+    #  break
   #
   clear_image(image.size, putpixel)
   draw_points(zip(nx,ny), putpixel, image.size)
