@@ -118,8 +118,8 @@ def voronoi_stipple(image):
     if centroidal_delta == 0.0:
       resolution *= 2
       print "(+) Increasing resolution to " + str(resolution) + "x."
-    #elif centroidal_delta < CONVERGENCE_LIMIT:
-    #  break
+    elif centroidal_delta < CONVERGENCE_LIMIT:
+      break
   #
   clear_image(image.size, putpixel)
   draw_points(zip(nx,ny), putpixel, image.size)
