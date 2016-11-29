@@ -40,16 +40,11 @@ def voronoi_stipple(image):
   #
   #
   # precompute centroid data
-  ccx = [[0] * imgx for y in range(imgy)]
-  ccy = [[0] * imgx for y in range(imgy)]
-  cct = [[0] * imgx for y in range(imgy)]
+  rho = [[0] * imgx for y in range(imgy)]
   #
   for y in range(imgy):
     for x in range(imgx):
-      p = 1 - pixels[x,y]/255.0 # rho 
-      cct[y][x] = ld( p   )
-      ccx[y][x] = ld( p*(x+.5) )
-      ccy[y][x] = ld( p*(y+.5) )
+      rho[y][x] = 1 - pixels[x,y]/255.0 # rho
   #
   clear_image(image.size, putpixel)
   draw_points(zip(nx,ny), putpixel, image.size)
@@ -80,10 +75,10 @@ def voronoi_stipple(image):
           if d < d_min:
             d_min = d
             i_min = i
-        #print (x_step,y_step), (x,y)
-        new_cx[i_min] += ccx[y][x]
-        new_cy[i_min] += ccy[y][x]
-        new_ct[i_min] += cct[y][x]
+        r = rho[y][x]
+        new_cx[i_min] += r * x_step
+        new_cy[i_min] += r * y_step
+        new_ct[i_min] += r
     # 
     #
     # compute new centroids
