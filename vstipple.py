@@ -14,7 +14,7 @@ from time import gmtime, strftime
 NEG_COLOR = 255
 POS_COLOR = 0
 CONVERGENCE_LIMIT = 10**-4
-DEFAULT_RESOLUTION = 2
+DEFAULT_RESOLUTION = 1
  
 def voronoi_stipple(image):
   #image = Image.new("RGB", (width, height))
@@ -22,7 +22,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) / 4
+  num_cells = (imgx + imgy) * 2
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
@@ -43,14 +43,13 @@ def voronoi_stipple(image):
   ccx = [[0] * imgx for y in range(imgy)]
   ccy = [[0] * imgx for y in range(imgy)]
   cct = [[0] * imgx for y in range(imgy)]
-  visited = [[0] * imgx for y in range(imgy)]
   #
   for y in range(imgy):
     for x in range(imgx):
       p = 1 - pixels[x,y]/255.0 # rho 
-      cct[y][x] = p
-      ccx[y][x] = p*x
-      ccy[y][x] = p*y
+      cct[y][x] = ld( p   )
+      ccx[y][x] = ld( p*x )
+      ccy[y][x] = ld( p*y )
   #
   clear_image(image.size, putpixel)
   draw_points(zip(nx,ny), putpixel, image.size)
@@ -66,7 +65,6 @@ def voronoi_stipple(image):
     zero_list( new_cx )
     zero_list( new_cy )
     zero_list( new_ct )
-    for x in range(len(visited)): zero_list( visited[x] )
     #
     #
     # shade regions and add up centroid totals
@@ -83,14 +81,9 @@ def voronoi_stipple(image):
             d_min = d
             i_min = i
         #print (x_step,y_step), (x,y)
-        new_cx[i_min] += ld(ccx[y][x])
-        new_cy[i_min] += ld(ccy[y][x])
-        new_ct[i_min] += ld(cct[y][x])
-        visited[y][x] += 1
-
-    for y in range(imgy):
-      for x in range(imgx):
-        if visited[y][x] != resolution**2: print "!!!!", (x,y), visited[y][x]
+        new_cx[i_min] += ccx[y][x]
+        new_cy[i_min] += ccy[y][x]
+        new_ct[i_min] += cct[y][x]
     # 
     #
     # compute new centroids
