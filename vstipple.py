@@ -43,7 +43,7 @@ def voronoi_stipple(image):
   #
   # save initial image
   clear_image(image.size, putpixel)
-  draw_points(zip(centroids[0],centroids[1]), putpixel, image.size)
+  draw_points(zip_points(centroids), putpixel, image.size)
   image.save("output/_step/" + showtime + "-" + str(0) + ".png", "PNG")
   #
   #
@@ -71,7 +71,7 @@ def voronoi_stipple(image):
     printr( str(iteration) + "     \tDifference: " + str(centroidal_delta) + ".\n" )
     # save a copy of the image (to GIF later)
     clear_image(image.size, putpixel)
-    draw_points(zip(centroids[0],centroids[1]), putpixel, image.size)
+    draw_points(zip_points(centroids), putpixel, image.size)
     image.save("output/_step/" + showtime + "-" + str(iteration) + ".png", "PNG")
     iteration += 1
     # break if difference below convergence point
@@ -82,7 +82,7 @@ def voronoi_stipple(image):
       break
   #
   clear_image(image.size, putpixel)
-  draw_points(zip(centroids[0],centroids[1]), putpixel, image.size)
+  draw_points(zip_points(centroids), putpixel, image.size)
   #
   return image
   #
@@ -138,6 +138,9 @@ def sum_regions(centroids, new_centroid_sums, rho, res_step, size):
       #
     #
   #
+
+def zip_points(p):
+  return zip(p[0], p[1])
 
 def printr(s):
   sys.stdout.write( "\r" + s )
