@@ -2,6 +2,7 @@
 # jack morris 11/08/16
 #
 
+import itertools
 import math
 import numpy as np
 from PIL import Image
@@ -75,21 +76,26 @@ def voronoi_stipple(image):
     #
     # shade regions and add up centroid totals
     res_step = 1.0 / (resolution)
-    for y_step in np.arange(res_step/2.0, imgy, res_step):
-      y = int( y_step )
-      for x_step in np.arange(res_step/2.0, imgx, res_step):
-        #
-        x = int( x_step )
-        i_min = tree.query([(x_step,y_step)])[1][0]
-        r = rho[y][x]
-        new_cx[i_min] += r * x_step
-        new_cy[i_min] += r * y_step
-        new_ct[i_min] += r
-        #
+    x_range = np.arange(res_step/2.0, imgx, res_step)
+    y_range = np.arange(res_step/2.0, imgy, res_step)
+    point_matrix = list(itertools.product(x_range, y_range))
+    nearest_nbr_indices = tree.query(point_matrix)[1]
+    for i in xrange(len(point_matrix)):
+      point = point_matrix[i]
+      x = point[0]
+      y = point[1]
+      r = rho[int(y)][int(x)]
+      nearest_nbr_index = nearest_nbr_indices[i]
+      new_cx[nearest_nbr_index] += r * x
+      new_cy[nearest_nbr_index] += r * y
+      new_ct[nearest_nbr_index] += r
       #
-      perc = (y_step * imgx) / (imgx * imgy)
-      sys.stdout.write( "\r" + "{:.2%}".format(perc))
-      sys.stdout.flush()
+      if i % 10 == 0:
+        #
+        perc = float(i) / len(point_matrix)
+        sys.stdout.write( "\r" + "{:.2%}".format(perc))
+        sys.stdout.flush()
+        #
       #
     # 
     #
