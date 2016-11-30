@@ -63,59 +63,12 @@ def voronoi_stipple(image):
     zero_list( new_centroid_sums[1] )
     zero_list( new_centroid_sums[2] )
     #
-    #
-    # construct 2-dimensional tree from generating points
-    tree = spatial.KDTree(zip(centroids[0], centroids[1]))
-    #
-    #
     # shade regions and add up centroid totals
-    res_step = 1.0 / (resolution)
-    x_range = np.arange(res_step/2.0, imgx, res_step)
-    y_range = np.arange(res_step/2.0, imgy, res_step)
-    point_matrix = list(itertools.product(x_range, y_range))
-    nearest_nbr_indices = tree.query(point_matrix)[1]
-    for i in xrange(len(point_matrix)):
-      point = point_matrix[i]
-      x = point[0]
-      y = point[1]
-      r = rho[int(y)][int(x)]
-      nearest_nbr_index = nearest_nbr_indices[i]
-      new_centroid_sums[0][nearest_nbr_index] += r * x
-      new_centroid_sums[1][nearest_nbr_index] += r * y
-      new_centroid_sums[2][nearest_nbr_index] += r
-      #
-      if i % 10 == 0:
-        #
-        perc = float(i) / len(point_matrix)
-        sys.stdout.write( "\r" + "{:.2%}".format(perc))
-        sys.stdout.flush()
-        #
-      #
-    # 
-    #
+    sum_regions(centroids, new_centroid_sums, rho, 1.0 / resolution, image.size)
     # compute new centroids
-    centroidal_delta = 0
-    i = 0
-    while i < num_cells:
-      if not new_centroid_sums[2][i]:
-        # all pixels in region have rho = 0
-        # remove centroid
-        del new_centroid_sums[0][i]
-        del new_centroid_sums[1][i]
-        del new_centroid_sums[2][i]
-        del centroids[0][i]
-        del centroids[1][i]
-        num_cells -= 1
-      else:
-        new_centroid_sums[0][i] /= new_centroid_sums[2][i]
-        new_centroid_sums[1][i] /= new_centroid_sums[2][i]
-        # print "centroidal_delta", centroidal_delta
-        centroidal_delta += hypot_square( (new_centroid_sums[0][i]-centroids[0][i]), (new_centroid_sums[1][i]-centroids[1][i]) )
-        centroids[0][i] = new_centroid_sums[0][i]
-        centroids[1][i] = new_centroid_sums[1][i]
-        i += 1
+    centroidal_delta = compute_centroids(len(centroids[0]), centroids, new_centroid_sums)
     # print difference
-    print "\rDifference:", str(centroidal_delta) + "."
+    printr( str(iteration) + "     \tDifference: " + str(centroidal_delta) + ".\n" )
     # save a copy of the image (to GIF later)
     clear_image(image.size, putpixel)
     draw_points(zip(centroids[0],centroids[1]), putpixel, image.size)
@@ -134,6 +87,62 @@ def voronoi_stipple(image):
   return image
   #
 
+def compute_centroids(num_cells, centroids, new_centroid_sums):
+  centroidal_delta = 0
+  i = 0
+  while i < num_cells:
+    if not new_centroid_sums[2][i]:
+      # all pixels in region have rho = 0
+      # remove centroid
+      del new_centroid_sums[0][i]
+      del new_centroid_sums[1][i]
+      del new_centroid_sums[2][i]
+      del centroids[0][i]
+      del centroids[1][i]
+      num_cells -= 1
+    else:
+      new_centroid_sums[0][i] /= new_centroid_sums[2][i]
+      new_centroid_sums[1][i] /= new_centroid_sums[2][i]
+      # print "centroidal_delta", centroidal_delta
+      centroidal_delta += hypot_square( (new_centroid_sums[0][i]-centroids[0][i]), (new_centroid_sums[1][i]-centroids[1][i]) )
+      centroids[0][i] = new_centroid_sums[0][i]
+      centroids[1][i] = new_centroid_sums[1][i]
+      i += 1
+  return centroidal_delta
+
+def sum_regions(centroids, new_centroid_sums, rho, res_step, size):
+  #
+  #
+  # construct 2-dimensional tree from generating points
+  tree = spatial.KDTree(zip(centroids[0], centroids[1]))
+  #
+  imgx, imgy = size
+  x_range = np.arange(res_step/2.0, imgx, res_step)
+  y_range = np.arange(res_step/2.0, imgy, res_step)
+  point_matrix = list(itertools.product(x_range, y_range))
+  nearest_nbr_indices = tree.query(point_matrix)[1]
+  for i in xrange(len(point_matrix)):
+    point = point_matrix[i]
+    x = point[0]
+    y = point[1]
+    r = rho[int(y)][int(x)]
+    nearest_nbr_index = nearest_nbr_indices[i]
+    new_centroid_sums[0][nearest_nbr_index] += r * x
+    new_centroid_sums[1][nearest_nbr_index] += r * y
+    new_centroid_sums[2][nearest_nbr_index] += r
+    #
+    if i % 10 == 0:
+      #
+      perc = float(i) / len(point_matrix)
+      printr( "{:.2%}".format(perc) )
+      #
+    #
+  #
+
+def printr(s):
+  sys.stdout.write( "\r" + s )
+  sys.stdout.flush()
+
 def zero_list(the_list):
   for x in xrange( len(the_list) ):
     the_list[x] = 0
@@ -151,13 +160,13 @@ def draw_points(points, putpixel, size):
   for i in range(len(points)):
     pt = round_point( points[i] )
     if pt == (0,0): 
-      # Skip pixels at origin - they'll mess up the stippler
+      # Skip pixels at origin - they'll break the TSP art
       continue
     putpixel(pt, POS_COLOR)
   #
 
 def round_point(pt):
-  return ( int(round(pt[0])), int(round(pt[1])) )
+  return ( int(pt[0]), int(pt[1]) )
 
 def hypot_square( d1, d2 ):
   if d1 == 0 and d2 == 0: return 0
