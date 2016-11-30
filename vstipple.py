@@ -6,6 +6,7 @@ import math
 import numpy as np
 from PIL import Image
 import random
+from scipy import spatial
 import sys
 from time import gmtime, strftime
 
@@ -40,27 +41,36 @@ def voronoi_stipple(image):
     ny.append(random.randrange(imgy))
   #
   #
-  # precompute centroid data
+  # precompute pixel densities
   rho = [[0] * imgx for y in range(imgy)]
-  #
   for y in range(imgy):
     for x in range(imgx):
       rho[y][x] = 1 - pixels[x,y]/255.0 # rho
   #
+  #
+  # save initial image
   clear_image(image.size, putpixel)
   draw_points(zip(nx,ny), putpixel, image.size)
   image.save("output/_step/" + showtime + "-" + str(0) + ".png", "PNG")
-  # iterate
+  #
+  #
+  # empty arrays for storing new centroid sums
   new_cx = [0] * num_cells
   new_cy = [0] * num_cells
   new_ct = [0] * num_cells
+  # 
+  #
+  # Iterate
   iteration = 1
   resolution = DEFAULT_RESOLUTION
-  max_hypot = imgx**2 + imgy**2
   while True:
     zero_list( new_cx )
     zero_list( new_cy )
     zero_list( new_ct )
+    #
+    #
+    # construct 2-dimensional tree from generating points
+    tree = spatial.KDTree(zip(nx, ny))
     #
     #
     # shade regions and add up centroid totals
@@ -70,13 +80,7 @@ def voronoi_stipple(image):
       for x_step in np.arange(res_step/2.0, imgx, res_step):
         #
         x = int( x_step )
-        d_min = max_hypot
-        i_min = None
-        for i in range(num_cells):
-          d = math.hypot(nx[i]-x_step, ny[i]-y_step)
-          if d < d_min:
-            d_min = d
-            i_min = i
+        i_min = tree.query([(x_step,y_step)])[1][0]
         r = rho[y][x]
         new_cx[i_min] += r * x_step
         new_cy[i_min] += r * y_step
