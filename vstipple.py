@@ -6,6 +6,7 @@ import math
 import numpy as np
 from PIL import Image
 import random
+import sys
 from time import gmtime, strftime
 
 #
@@ -22,7 +23,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 2
+  num_cells = (imgx + imgy) * 6
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
@@ -67,6 +68,7 @@ def voronoi_stipple(image):
     for y_step in np.arange(res_step/2.0, imgy, res_step):
       y = int( y_step )
       for x_step in np.arange(res_step/2.0, imgx, res_step):
+        #
         x = int( x_step )
         d_min = max_hypot
         i_min = None
@@ -79,6 +81,12 @@ def voronoi_stipple(image):
         new_cx[i_min] += r * x_step
         new_cy[i_min] += r * y_step
         new_ct[i_min] += r
+        #
+      #
+      perc = (y_step * imgx) / (imgx * imgy)
+      sys.stdout.write( "\r" + "{:.2%}".format(perc))
+      sys.stdout.flush()
+      #
     # 
     #
     # compute new centroids
@@ -103,7 +111,7 @@ def voronoi_stipple(image):
         ny[i] = new_cy[i]
         i += 1
     # print difference
-    print "Difference:", str(centroidal_delta) + "."
+    print "\rDifference:", str(centroidal_delta) + "."
     # save a copy of the image (to GIF later)
     clear_image(image.size, putpixel)
     draw_points(zip(nx,ny), putpixel, image.size)
@@ -151,4 +159,7 @@ def ld(x):
   return np.longdouble(x)
 
 def hypot_square( d1, d2 ):
+  if d1 == 0 and d2 == 0: return 0
+  elif d1 == 0: return d2 ** 2
+  elif d2 == 0: return d1 ** 2
   return d1**2 + d2**2
