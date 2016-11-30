@@ -136,7 +136,7 @@ def voronoi_stipple(image):
 
 def zero_list(the_list):
   for x in xrange( len(the_list) ):
-    the_list[x] = ld(0)
+    the_list[x] = 0
 
 def clear_image(size, putpixel):
   #
@@ -158,9 +158,6 @@ def draw_points(points, putpixel, size):
 
 def round_point(pt):
   return ( int(round(pt[0])), int(round(pt[1])) )
-
-def ld(x):
-  return np.longdouble(x)
 
 def hypot_square( d1, d2 ):
   if d1 == 0 and d2 == 0: return 0
