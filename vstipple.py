@@ -30,17 +30,9 @@ def voronoi_stipple(image):
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
   #
-  nx = []
-  ny = []
-  #
-  region_data = {}
+  centroids = [[random.randrange(imgx) for x in xrange(num_cells)],
+               [random.randrange(imgy) for x in xrange(num_cells)]]
   # 
-  #
-  # random seed points
-  for i in range(num_cells):
-    nx.append(random.randrange(imgx))
-    ny.append(random.randrange(imgy))
-  #
   #
   # precompute pixel densities
   rho = [[0] * imgx for y in range(imgy)]
@@ -51,27 +43,29 @@ def voronoi_stipple(image):
   #
   # save initial image
   clear_image(image.size, putpixel)
-  draw_points(zip(nx,ny), putpixel, image.size)
+  draw_points(zip(centroids[0],centroids[1]), putpixel, image.size)
   image.save("output/_step/" + showtime + "-" + str(0) + ".png", "PNG")
   #
   #
   # empty arrays for storing new centroid sums
-  new_cx = [0] * num_cells
-  new_cy = [0] * num_cells
-  new_ct = [0] * num_cells
+  new_centroid_sums = [
+    [0] * num_cells,  # x component
+    [0] * num_cells,  # y component
+    [0] * num_cells   # density
+  ]
   # 
   #
   # Iterate
   iteration = 1
   resolution = DEFAULT_RESOLUTION
   while True:
-    zero_list( new_cx )
-    zero_list( new_cy )
-    zero_list( new_ct )
+    zero_list( new_centroid_sums[0] )
+    zero_list( new_centroid_sums[1] )
+    zero_list( new_centroid_sums[2] )
     #
     #
     # construct 2-dimensional tree from generating points
-    tree = spatial.KDTree(zip(nx, ny))
+    tree = spatial.KDTree(zip(centroids[0], centroids[1]))
     #
     #
     # shade regions and add up centroid totals
@@ -86,9 +80,9 @@ def voronoi_stipple(image):
       y = point[1]
       r = rho[int(y)][int(x)]
       nearest_nbr_index = nearest_nbr_indices[i]
-      new_cx[nearest_nbr_index] += r * x
-      new_cy[nearest_nbr_index] += r * y
-      new_ct[nearest_nbr_index] += r
+      new_centroid_sums[0][nearest_nbr_index] += r * x
+      new_centroid_sums[1][nearest_nbr_index] += r * y
+      new_centroid_sums[2][nearest_nbr_index] += r
       #
       if i % 10 == 0:
         #
@@ -103,28 +97,28 @@ def voronoi_stipple(image):
     centroidal_delta = 0
     i = 0
     while i < num_cells:
-      if not new_ct[i]:
+      if not new_centroid_sums[2][i]:
         # all pixels in region have rho = 0
         # remove centroid
-        del new_cx[i]
-        del new_cy[i]
-        del new_ct[i]
-        del nx[i]
-        del ny[i]
+        del new_centroid_sums[0][i]
+        del new_centroid_sums[1][i]
+        del new_centroid_sums[2][i]
+        del centroids[0][i]
+        del centroids[1][i]
         num_cells -= 1
       else:
-        new_cx[i] /= new_ct[i]
-        new_cy[i] /= new_ct[i]
+        new_centroid_sums[0][i] /= new_centroid_sums[2][i]
+        new_centroid_sums[1][i] /= new_centroid_sums[2][i]
         # print "centroidal_delta", centroidal_delta
-        centroidal_delta += hypot_square( (new_cx[i]-nx[i]), (new_cy[i]-ny[i]) )
-        nx[i] = new_cx[i]
-        ny[i] = new_cy[i]
+        centroidal_delta += hypot_square( (new_centroid_sums[0][i]-centroids[0][i]), (new_centroid_sums[1][i]-centroids[1][i]) )
+        centroids[0][i] = new_centroid_sums[0][i]
+        centroids[1][i] = new_centroid_sums[1][i]
         i += 1
     # print difference
     print "\rDifference:", str(centroidal_delta) + "."
     # save a copy of the image (to GIF later)
     clear_image(image.size, putpixel)
-    draw_points(zip(nx,ny), putpixel, image.size)
+    draw_points(zip(centroids[0],centroids[1]), putpixel, image.size)
     image.save("output/_step/" + showtime + "-" + str(iteration) + ".png", "PNG")
     iteration += 1
     # break if difference below convergence point
@@ -135,7 +129,7 @@ def voronoi_stipple(image):
       break
   #
   clear_image(image.size, putpixel)
-  draw_points(zip(nx,ny), putpixel, image.size)
+  draw_points(zip(centroids[0],centroids[1]), putpixel, image.size)
   #
   return image
   #
