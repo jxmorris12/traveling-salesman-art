@@ -5,6 +5,7 @@
 import itertools
 import math
 import numpy as np
+import os
 from PIL import Image
 import random
 from scipy import spatial
@@ -16,7 +17,7 @@ from time import gmtime, strftime
 #
 NEG_COLOR = 255
 POS_COLOR = 0
-CONVERGENCE_LIMIT = 5 # * 10**-4
+CONVERGENCE_LIMIT = 5 * 10**-4
 DEFAULT_RESOLUTION = 1
 FINAL_MAGNIFICATION = 8
  
@@ -26,7 +27,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 2
+  num_cells = (imgx + imgy) * 8
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
@@ -44,10 +45,15 @@ def voronoi_stipple(image):
       rho[y][x] = 0 + pixels[x,y]/255.0 # rho
   #
   #
+  # make folder to save each snapshot
+  folder_base = "output/_step/" + showtime + "/"
+  os.makedirs(folder_base)
+  #
+  #
   # save initial image
   clear_image(image.size, putpixel)
   draw_points(zip_points(centroids), putpixel, image.size)
-  image.save("output/_step/" + showtime + "-" + str(0) + ".png", "PNG")
+  image.save(folder_base + "0.png", "PNG")
   #
   #
   # empty arrays for storing new centroid sums
@@ -75,7 +81,7 @@ def voronoi_stipple(image):
     # save a copy of the image (to GIF later)
     clear_image(image.size, putpixel)
     draw_points(zip_points(centroids), putpixel, image.size)
-    image.save("output/_step/" + showtime + "-" + str(iteration) + ".png", "PNG")
+    image.save(folder_base + str(iteration) + ".png", "PNG")
     iteration += 1
     # break if difference below convergence point
     if centroidal_delta == 0.0:
