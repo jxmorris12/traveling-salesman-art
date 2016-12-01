@@ -19,7 +19,7 @@ NEG_COLOR = 255
 POS_COLOR = 0
 CONVERGENCE_LIMIT = 5 * 10**-4
 DEFAULT_RESOLUTION = 1
-FINAL_MAGNIFICATION = 8
+MAGNIFICATION = 16
  
 def voronoi_stipple(image):
   #
@@ -27,7 +27,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = int(math.hypot(imgx, imgy) * 8)
+  num_cells = int(math.hypot(imgx, imgy) * MAGNIFICATION)
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
@@ -168,13 +168,13 @@ def clear_image(size, putpixel):
 
 def magnify_and_draw_points(points, size):
   #
-  magnified_size = (size[0] * FINAL_MAGNIFICATION, size[1] * FINAL_MAGNIFICATION)
+  magnified_size = (size[0] * MAGNIFICATION, size[1] * MAGNIFICATION)
   blank_magnified_image = Image.new("L", magnified_size)
   putpixel = blank_magnified_image.putpixel
   clear_image(magnified_size, putpixel)
   #
   #
-  magnified_points = [tuple(FINAL_MAGNIFICATION*x for x in point) for point in points]
+  magnified_points = [tuple(MAGNIFICATION*x for x in point) for point in points]
   #
   draw_points(magnified_points, putpixel, magnified_size)
   #
