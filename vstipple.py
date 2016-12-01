@@ -27,7 +27,7 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 8
+  num_cells = int(math.hypot(imgx, imgy) * 8)
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
@@ -42,7 +42,7 @@ def voronoi_stipple(image):
   rho = [[0] * imgx for y in range(imgy)]
   for y in range(imgy):
     for x in range(imgx):
-      rho[y][x] = 0 + pixels[x,y]/255.0 # rho
+      rho[y][x] = 1 - pixels[x,y]/255.0 # rho
   #
   #
   # make folder to save each snapshot
@@ -68,46 +68,43 @@ def voronoi_stipple(image):
   iteration = 1
   resolution = DEFAULT_RESOLUTION
   while True:
-    zero_list( new_centroid_sums[0] )
-    zero_list( new_centroid_sums[1] )
-    zero_list( new_centroid_sums[2] )
+    #
+    #
+    # zero sums
+    zero_lists( new_centroid_sums )
     #
     # shade regions and add up centroid totals
     sum_regions(centroids, new_centroid_sums, rho, 1.0 / resolution, image.size)
     # compute new centroids
-    centroidal_delta = compute_centroids(len(centroids[0]), centroids, new_centroid_sums)
+    centroidal_delta = compute_centroids(len(centroids[0]), centroids, new_centroid_sums, image.size)
     # print difference
     printr( str(iteration) + "     \tDifference: " + str(centroidal_delta) + ".\n" )
-    # save a copy of the image (to GIF later)
+    # save a snapshot of the image (to GIF later)
     clear_image(image.size, putpixel)
     draw_points(zip_points(centroids), putpixel, image.size)
     image.save(folder_base + str(iteration) + ".png", "PNG")
-    iteration += 1
     # break if difference below convergence point
     if centroidal_delta == 0.0:
       resolution *= 2
       print "(+) Increasing resolution to " + str(resolution) + "x."
     elif centroidal_delta < CONVERGENCE_LIMIT:
       break
+    #
+    iteration += 1
   #
   print "(+) Magnifying image and drawing final centroids."
   #
   return magnify_and_draw_points(zip_points(centroids), image.size)
   #
 
-def compute_centroids(num_cells, centroids, new_centroid_sums):
+def compute_centroids(num_cells, centroids, new_centroid_sums, image_size):
   centroidal_delta = 0
-  i = 0
-  while i < num_cells:
+  for i in xrange(num_cells):
     if not new_centroid_sums[2][i]:
       # all pixels in region have rho = 0
-      # remove centroid
-      del new_centroid_sums[0][i]
-      del new_centroid_sums[1][i]
-      del new_centroid_sums[2][i]
-      del centroids[0][i]
-      del centroids[1][i]
-      num_cells -= 1
+        # send centroid somewhere else
+      centroids[0][i] = random.randrange(image_size[0])
+      centroids[1][i] = random.randrange(image_size[1])
     else:
       new_centroid_sums[0][i] /= new_centroid_sums[2][i]
       new_centroid_sums[1][i] /= new_centroid_sums[2][i]
@@ -115,7 +112,6 @@ def compute_centroids(num_cells, centroids, new_centroid_sums):
       centroidal_delta += hypot_square( (new_centroid_sums[0][i]-centroids[0][i]), (new_centroid_sums[1][i]-centroids[1][i]) )
       centroids[0][i] = new_centroid_sums[0][i]
       centroids[1][i] = new_centroid_sums[1][i]
-      i += 1
   return centroidal_delta
 
 def sum_regions(centroids, new_centroid_sums, rho, res_step, size):
@@ -153,6 +149,10 @@ def zip_points(p):
 def printr(s):
   sys.stdout.write( "\r" + s )
   sys.stdout.flush()
+
+def zero_lists(the_lists):
+  for the_list in the_lists:
+    zero_list(the_list)
 
 def zero_list(the_list):
   for x in xrange( len(the_list) ):

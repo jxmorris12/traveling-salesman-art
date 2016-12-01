@@ -8,11 +8,6 @@ from PIL import Image, ImageDraw
 # creates an approximate solution using a TSP heuristic
 # outputs the image with the path traced out as one line
 
-
-# uses a version of the nearest-neighbor approximation as follows:
-# take a random node
-# choose the nearest neighbor to that node that has not been chosen
-
 # store image pos and neg color
 NEG_COLOR = None
 POS_COLOR = None
@@ -45,7 +40,7 @@ def draw_dots(nodes, image):
     # draw dots
     draw = ImageDraw.Draw(image)
     for node in nodes:
-        draw_circle(draw, node, 2 )
+        draw_circle(draw, node, 2)
     #
     #
     # return
