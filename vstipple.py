@@ -16,29 +16,32 @@ from time import gmtime, strftime
 #
 NEG_COLOR = 255
 POS_COLOR = 0
-CONVERGENCE_LIMIT = 10**-4
+CONVERGENCE_LIMIT = 5 # * 10**-4
 DEFAULT_RESOLUTION = 1
+FINAL_MAGNIFICATION = 8
  
 def voronoi_stipple(image):
-  #image = Image.new("RGB", (width, height))
+  #
   pixels = image.load()
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = (imgx + imgy) * 6
+  num_cells = (imgx + imgy) * 2
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
   #
-  centroids = [[random.randrange(imgx) for x in xrange(num_cells)],
-               [random.randrange(imgy) for x in xrange(num_cells)]]
+  centroids = [
+    [random.randrange(imgx) for x in xrange(num_cells)],
+    [random.randrange(imgy) for x in xrange(num_cells)]
+  ]
   # 
   #
   # precompute pixel densities
   rho = [[0] * imgx for y in range(imgy)]
   for y in range(imgy):
     for x in range(imgx):
-      rho[y][x] = 1 - pixels[x,y]/255.0 # rho
+      rho[y][x] = 0 + pixels[x,y]/255.0 # rho
   #
   #
   # save initial image
@@ -81,10 +84,9 @@ def voronoi_stipple(image):
     elif centroidal_delta < CONVERGENCE_LIMIT:
       break
   #
-  clear_image(image.size, putpixel)
-  draw_points(zip_points(centroids), putpixel, image.size)
+  print "(+) Magnifying image and drawing final centroids."
   #
-  return image
+  return magnify_and_draw_points(zip_points(centroids), image.size)
   #
 
 def compute_centroids(num_cells, centroids, new_centroid_sums):
@@ -156,6 +158,21 @@ def clear_image(size, putpixel):
   for y in range(imgy):
     for x in range(imgx):
       putpixel((x, y), NEG_COLOR) # clear image for now
+  #
+
+def magnify_and_draw_points(points, size):
+  #
+  magnified_size = (size[0] * FINAL_MAGNIFICATION, size[1] * FINAL_MAGNIFICATION)
+  blank_magnified_image = Image.new("L", magnified_size)
+  putpixel = blank_magnified_image.putpixel
+  clear_image(magnified_size, putpixel)
+  #
+  #
+  magnified_points = [tuple(FINAL_MAGNIFICATION*x for x in point) for point in points]
+  #
+  draw_points(magnified_points, putpixel, magnified_size)
+  #
+  return blank_magnified_image
   #
 
 def draw_points(points, putpixel, size):

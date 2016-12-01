@@ -45,7 +45,7 @@ def draw_dots(nodes, image):
     # draw dots
     draw = ImageDraw.Draw(image)
     for node in nodes:
-        draw_circle(draw, node, 2)
+        draw_circle(draw, node, 2 )
     #
     #
     # return

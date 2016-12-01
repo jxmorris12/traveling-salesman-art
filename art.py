@@ -10,7 +10,7 @@ import vstipple as stippler
 
 def __main__():
     #
-    image_filename = "input/smiley.png" 
+    image_filename = "input/windows-logo.png" 
     image = Image.open(image_filename).convert('L')
     #
     showtime = strftime("%Y%m%d%H%M%S", gmtime())
