@@ -17,17 +17,20 @@ from time import gmtime, strftime
 #
 NEG_COLOR = 255
 POS_COLOR = 0
-CONVERGENCE_LIMIT = 8 * 10**-3
+CONVERGENCE_LIMIT = 5 * 10**-3
 DEFAULT_RESOLUTION = 1
-MAGNIFICATION = 16
+MAGNIFICATION = 8
  
+#
+# compute the weighted voronoi stippling for an image
+#
 def voronoi_stipple(image):
   #
   pixels = image.load()
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = int(math.hypot(imgx, imgy) * 2 * MAGNIFICATION)
+  num_cells = int(math.hypot(imgx, imgy) * MAGNIFICATION)
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   showtime += "-" + str( num_cells )
@@ -60,46 +63,45 @@ def voronoi_stipple(image):
   #
   # empty arrays for storing new centroid sums
   new_centroid_sums = [
-    [0] * num_cells,  # x component
-    [0] * num_cells,  # y component
-    [0] * num_cells   # density
+    [0] * num_cells,  #   x component
+    [0] * num_cells,  #   y component
+    [0] * num_cells   #   density
   ]
   # 
   #
-  # Iterate
+  # Iterate to convergence
   iteration = 1
   resolution = DEFAULT_RESOLUTION
   while True:
-    #
-    #
-    # zero sums
+    # Zero all sums.
     zero_lists( new_centroid_sums )
-    #
-    # shade regions and add up centroid totals
+    # Shade regions and add up centroid totals.
     sum_regions(centroids, new_centroid_sums, rho, 1.0 / resolution, image.size)
-    # compute new centroids
+    # Compute new centroids.
     centroidal_delta = compute_centroids(centroids, new_centroid_sums, image.size)
-    # print difference
+    # Print step difference.
     printr( str(iteration) + "     \tDifference: " + str(centroidal_delta) + ".\n" )
-    # save a snapshot of the image (to GIF later)
+    # Save a snapshot of the current image.
     clear_image(image.size, putpixel)
     draw_points(zip_points(centroids), putpixel)
     image.save(folder_base + str(iteration) + ".png", "PNG")
-    # if no pixels shifted we have to increase resolution
+    # If no pixels shifted, we have to increase resolution.
     if centroidal_delta == 0.0:
       resolution *= 2
       print "(+) Increasing resolution to " + str(resolution) + "x."
-    # break if difference below convergence point
+    # Break if difference below convergence point.
     elif centroidal_delta < CONVERGENCE_LIMIT:
       break
-    #
+    # Increase iteration count.
     iteration += 1
-  #
-  print "(+) Magnifying image and drawing xxfinal centroids."
-  #
+  # Final print statement.
+  print "(+) Magnifying image and drawing final centroids."
   return magnify_and_draw_points(zip_points(centroids), image.size)
   #
 
+#
+# calculate centroids for a weighted voronoi diagram
+#
 def compute_centroids(centroids, new_centroid_sums, image_size):
   centroidal_delta = 0
   for i in xrange(len(centroids[0])):
@@ -117,6 +119,9 @@ def compute_centroids(centroids, new_centroid_sums, image_size):
       centroids[1][i] = new_centroid_sums[1][i]
   return centroidal_delta
 
+#
+# create weighted voronoi diagram and add up for new centroids
+#
 def sum_regions(centroids, new_centroid_sums, rho, res_step, size):
   #
   #
@@ -146,21 +151,37 @@ def sum_regions(centroids, new_centroid_sums, rho, res_step, size):
     #
   #
 
+#
+# zip 2d array into tuples
+#
 def zip_points(p):
   return zip(p[0], p[1])
 
+#
+# carriage return and print
+#
 def printr(s):
   sys.stdout.write( "\r" + s )
   sys.stdout.flush()
 
+#
+# set each element in a set of lists to zero
+#
 def zero_lists(the_lists):
   for the_list in the_lists:
     zero_list(the_list)
 
+
+# 
+# set every element in a list to zero
+#
 def zero_list(the_list):
   for x in xrange( len(the_list) ):
     the_list[x] = 0
 
+#
+# set all pixels in an image to its negative color
+#
 def clear_image(size, putpixel):
   #
   imgx, imgy = size
@@ -169,6 +190,9 @@ def clear_image(size, putpixel):
       putpixel((x, y), NEG_COLOR)
   #
 
+#
+# increase whitespace between images and draw final nodes
+#
 def magnify_and_draw_points(points, size):
   #
   magnified_size = (size[0] * MAGNIFICATION, size[1] * MAGNIFICATION)
@@ -184,6 +208,9 @@ def magnify_and_draw_points(points, size):
   return blank_magnified_image
   #
 
+#
+# draw a set of points on an image
+#
 def draw_points(points, putpixel):
   #
   for i in range(len(points)):
@@ -194,9 +221,15 @@ def draw_points(points, putpixel):
     putpixel(pt, POS_COLOR)
   #
 
+#
+# cast a tuple to integers
+#
 def round_point(pt):
   return ( int(pt[0]), int(pt[1]) )
 
+#
+# faster hypotenuse (don't need to square-root it)
+#
 def hypot_square( d1, d2 ):
   if d1 == 0 and d2 == 0: return 0
   elif d1 == 0: return d2 ** 2

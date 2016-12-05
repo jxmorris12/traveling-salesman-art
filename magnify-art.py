@@ -15,7 +15,7 @@ def __main__():
     image_extension = ".png"
     dotted_image = Image.open(folder_base + image_filename + image_extension).convert('L')
     #
-    stippled_image = dot_stippler.draw_dots_on(dotted_image.copy(), True)
+    stippled_image = dot_stippler.draw_dots_on(dotted_image.copy(), False)
     stippled_image.show()
     stippled_image.save("output/s-" + image_filename + image_extension, "PNG")
     #

@@ -10,7 +10,7 @@ import vstipple as stippler
 
 def __main__():
     #
-    image_filename = "input/isaac.jpg" 
+    image_filename = "sample-input/figure5_525x525.png" 
     image = Image.open(image_filename).convert('L')
     #
     showtime = strftime("%Y%m%d%H%M%S", gmtime())
