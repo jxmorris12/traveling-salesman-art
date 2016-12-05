@@ -17,7 +17,7 @@ from time import gmtime, strftime
 #
 NEG_COLOR = 255
 POS_COLOR = 0
-CONVERGENCE_LIMIT = 5 * 10**-4
+CONVERGENCE_LIMIT = 8 * 10**-3
 DEFAULT_RESOLUTION = 1
 MAGNIFICATION = 16
  
@@ -27,9 +27,11 @@ def voronoi_stipple(image):
   putpixel = image.putpixel
   imgx, imgy = image.size
   #
-  num_cells = int(math.hypot(imgx, imgy) * MAGNIFICATION)
+  num_cells = int(math.hypot(imgx, imgy) * 2 * MAGNIFICATION)
   #
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
+  showtime += "-" + str( num_cells )
+  #
   print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
   #
   centroids = [
@@ -52,7 +54,7 @@ def voronoi_stipple(image):
   #
   # save initial image
   clear_image(image.size, putpixel)
-  draw_points(zip_points(centroids), putpixel, image.size)
+  draw_points(zip_points(centroids), putpixel)
   image.save(folder_base + "0.png", "PNG")
   #
   #
@@ -76,30 +78,31 @@ def voronoi_stipple(image):
     # shade regions and add up centroid totals
     sum_regions(centroids, new_centroid_sums, rho, 1.0 / resolution, image.size)
     # compute new centroids
-    centroidal_delta = compute_centroids(len(centroids[0]), centroids, new_centroid_sums, image.size)
+    centroidal_delta = compute_centroids(centroids, new_centroid_sums, image.size)
     # print difference
     printr( str(iteration) + "     \tDifference: " + str(centroidal_delta) + ".\n" )
     # save a snapshot of the image (to GIF later)
     clear_image(image.size, putpixel)
-    draw_points(zip_points(centroids), putpixel, image.size)
+    draw_points(zip_points(centroids), putpixel)
     image.save(folder_base + str(iteration) + ".png", "PNG")
-    # break if difference below convergence point
+    # if no pixels shifted we have to increase resolution
     if centroidal_delta == 0.0:
       resolution *= 2
       print "(+) Increasing resolution to " + str(resolution) + "x."
+    # break if difference below convergence point
     elif centroidal_delta < CONVERGENCE_LIMIT:
       break
     #
     iteration += 1
   #
-  print "(+) Magnifying image and drawing final centroids."
+  print "(+) Magnifying image and drawing xxfinal centroids."
   #
   return magnify_and_draw_points(zip_points(centroids), image.size)
   #
 
-def compute_centroids(num_cells, centroids, new_centroid_sums, image_size):
+def compute_centroids(centroids, new_centroid_sums, image_size):
   centroidal_delta = 0
-  for i in xrange(num_cells):
+  for i in xrange(len(centroids[0])):
     if not new_centroid_sums[2][i]:
       # all pixels in region have rho = 0
         # send centroid somewhere else
@@ -163,7 +166,7 @@ def clear_image(size, putpixel):
   imgx, imgy = size
   for y in range(imgy):
     for x in range(imgx):
-      putpixel((x, y), NEG_COLOR) # clear image for now
+      putpixel((x, y), NEG_COLOR)
   #
 
 def magnify_and_draw_points(points, size):
@@ -176,12 +179,12 @@ def magnify_and_draw_points(points, size):
   #
   magnified_points = [tuple(MAGNIFICATION*x for x in point) for point in points]
   #
-  draw_points(magnified_points, putpixel, magnified_size)
+  draw_points(magnified_points, putpixel)
   #
   return blank_magnified_image
   #
 
-def draw_points(points, putpixel, size):
+def draw_points(points, putpixel):
   #
   for i in range(len(points)):
     pt = round_point( points[i] )

@@ -11,18 +11,59 @@ from PIL import Image, ImageDraw
 # store image pos and neg color
 NEG_COLOR = None
 POS_COLOR = None
+CIRCLE_RADIUS = 4
 
 #
 # connect_the_dots (this file's main method)
 #
-def draw_dots_on(image):
+def draw_dots_on(image, stretched=True):
     #
     nodes = read_in_nodes(image)
     print "Read in",len(nodes),"nodes."
     #
+    if not stretched:
+        image = magnify_image(image.size, nodes, CIRCLE_RADIUS)
+        nodes = [(x[0] * CIRCLE_RADIUS, x[1] * CIRCLE_RADIUS) for x in nodes]
+    #
     return draw_dots(nodes, image)
     #
 
+#
+# stretch whitespace over an image
+#
+def magnify_image(original_size, nodes, stretch_factor):
+    #
+    magnified_size = (original_size[0] * stretch_factor, original_size[1] * stretch_factor)
+    magnified_image = Image.new("L", magnified_size)
+    #
+    putpixel = magnified_image.putpixel
+    #
+    clear_image(magnified_size, putpixel)
+    #
+    return magnified_image
+    #
+#
+# set all pixels in image to negative color
+#
+def clear_image(size, putpixel):
+  #
+  imgx, imgy = size
+  for y in range(imgy):
+    for x in range(imgx):
+      putpixel((x, y), NEG_COLOR)
+
+#
+# draw a set of points on an image
+#
+def draw_points(points, putpixel):
+  #
+  for i in range(len(points)):
+    pt = (int(points[i][0]), int(points[i][1]))
+    if pt == (0,0): 
+      # Skip pixels at origin - they'll break the TSP art
+      continue
+    putpixel(pt, POS_COLOR)
+  #
 #
 # draw a set of lines on an image
 #
@@ -40,7 +81,7 @@ def draw_dots(nodes, image):
     # draw dots
     draw = ImageDraw.Draw(image)
     for node in nodes:
-        draw_circle(draw, node, 2)
+        draw_circle(draw, node, CIRCLE_RADIUS)
     #
     #
     # return

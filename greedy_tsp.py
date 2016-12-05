@@ -17,6 +17,8 @@ from tsp_solver.greedy import solve_tsp
 # store image pos and neg color
 NEG_COLOR = None
 POS_COLOR = None
+# better results have been seen with thicker lines
+LINE_WIDTH = 2
 
 #
 # connect_the_dots (this file's main method)
@@ -46,7 +48,7 @@ def draw_lines_on_image(lines, image):
         #
         points = (point1, point2)
         #
-        draw.line( points, fill=POS_COLOR )
+        draw.line( points, fill=POS_COLOR, width=LINE_WIDTH )
         #
     # free up some space
     del draw
