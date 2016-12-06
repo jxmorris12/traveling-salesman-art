@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw
 # store image pos and neg color
 NEG_COLOR = None
 POS_COLOR = None
-CIRCLE_RADIUS = 4
+CIRCLE_RADIUS = 6 
 
 #
 # connect_the_dots (this file's main method)

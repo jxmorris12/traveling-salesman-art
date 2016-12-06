@@ -10,14 +10,19 @@ import vstipple as stippler
 
 def __main__():
     #
-    image_filename = "sample-input/figure5_525x525.png" 
-    image = Image.open(image_filename).convert('L')
+    folder_base = "input/"
+    image_filename = "isaac-edited.jpg"
+    image = Image.open(folder_base + image_filename).convert('L')
     #
     showtime = strftime("%Y%m%d%H%M%S", gmtime())
     #
     dotted_image = stippler.voronoi_stipple(image)
     dotted_image.show()
     dotted_image.save("output/d-" + showtime + ".png", "PNG")
+    #
+    stippled_image = dot_stippler.draw_dots_on(dotted_image.copy(), True)
+    stippled_image.show()
+    stippled_image.save("output/s-" + showtime + ".png", "PNG")
     #
     print "Connecting image dots..."
     tsp_image = tsp.connect_the_dots(dotted_image)

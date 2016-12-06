@@ -17,7 +17,7 @@ from time import gmtime, strftime
 #
 NEG_COLOR = 255
 POS_COLOR = 0
-CONVERGENCE_LIMIT = 5 * 10**-3
+CONVERGENCE_LIMIT = 5 * 10**-1
 DEFAULT_RESOLUTION = 1
 MAGNIFICATION = 8
  
@@ -90,7 +90,7 @@ def voronoi_stipple(image):
       resolution *= 2
       print "(+) Increasing resolution to " + str(resolution) + "x."
     # Break if difference below convergence point.
-    elif centroidal_delta < CONVERGENCE_LIMIT:
+    elif centroidal_delta < CONVERGENCE_LIMIT * resolution:
       break
     # Increase iteration count.
     iteration += 1
