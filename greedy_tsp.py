@@ -26,10 +26,10 @@ LINE_WIDTH = 2
 def connect_the_dots(image):
     #
     nodes = read_in_nodes(image)
-    print "Read in",len(nodes),"nodes."
+    #print "Read in",len(nodes),"nodes."
     #
     lines = connect_dots_with_lines(read_in_nodes(image))
-    print "Calculated nearest neighbors."
+    print("Calculated nearest neighbors.")
     #
     return draw_lines_on_image(lines, image)
     #
@@ -104,10 +104,10 @@ def read_in_nodes(image):
     pixels = image.load()
     nodes = []
     NEG_COLOR = pixels[0,0]
-    print "Neg_color:", NEG_COLOR
+    # print "Neg_color:", NEG_COLOR
     #
-    for i in xrange(width):
-        for j in xrange(height):
+    for i in range(width):
+        for j in range(height):
             #
             if pixels[i,j] != NEG_COLOR:
                 #

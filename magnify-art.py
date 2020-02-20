@@ -19,7 +19,7 @@ def __main__():
     stippled_image.show()
     stippled_image.save("output/s-" + image_filename + image_extension, "PNG")
     #
-    # print "Connecting image dots..."
+    # print ("Connecting image dots...")
     # tsp_image = tsp.connect_the_dots(dotted_image)
     # tsp_image.show()
     # export
