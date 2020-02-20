@@ -19,7 +19,7 @@ CIRCLE_RADIUS = 6
 def draw_dots_on(image, stretched=True):
     #
     nodes = read_in_nodes(image)
-    print "Read in",len(nodes),"nodes."
+    # print "Read in",len(nodes),"nodes."
     #
     if not stretched:
         image = magnify_image(image.size, nodes, CIRCLE_RADIUS)
@@ -73,8 +73,8 @@ def draw_dots(nodes, image):
     # clear image
     imgx, imgy = image.size
     pixels = image.load()
-    for y in xrange(imgy):
-        for x in xrange(imgx):
+    for y in range(imgy):
+        for x in range(imgx):
             pixels[x,y] = NEG_COLOR
     #
     #
@@ -108,8 +108,8 @@ def read_in_nodes(image):
     NEG_COLOR = pixels[0,0]
     print "Neg_color:", NEG_COLOR
     #
-    for i in xrange(width):
-        for j in xrange(height):
+    for i in range(width):
+        for j in range(height):
             #
             if pixels[i,j] != NEG_COLOR:
                 #

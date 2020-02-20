@@ -35,11 +35,11 @@ def voronoi_stipple(image):
   showtime = strftime("%Y%m%d%H%M%S", gmtime())
   showtime += "-" + str( num_cells )
   #
-  print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
+  # print "(+) Creating", num_cells,"stipples with convergence point", str(CONVERGENCE_LIMIT)+"."
   #
   centroids = [
-    [random.randrange(imgx) for x in xrange(num_cells)],
-    [random.randrange(imgy) for x in xrange(num_cells)]
+    [random.randrange(imgx) for x in range(num_cells)],
+    [random.randrange(imgy) for x in range(num_cells)]
   ]
   # 
   #
@@ -88,14 +88,14 @@ def voronoi_stipple(image):
     # If no pixels shifted, we have to increase resolution.
     if centroidal_delta == 0.0:
       resolution *= 2
-      print "(+) Increasing resolution to " + str(resolution) + "x."
+      # print "(+) Increasing resolution to " + str(resolution) + "x."
     # Break if difference below convergence point.
     elif centroidal_delta < CONVERGENCE_LIMIT * resolution:
       break
     # Increase iteration count.
     iteration += 1
   # Final print statement.
-  print "(+) Magnifying image and drawing final centroids."
+  # print "(+) Magnifying image and drawing final centroids."
   return magnify_and_draw_points(zip_points(centroids), image.size)
   #
 
@@ -104,7 +104,7 @@ def voronoi_stipple(image):
 #
 def compute_centroids(centroids, new_centroid_sums, image_size):
   centroidal_delta = 0
-  for i in xrange(len(centroids[0])):
+  for i in range(len(centroids[0])):
     if not new_centroid_sums[2][i]:
       # all pixels in region have rho = 0
         # send centroid somewhere else
@@ -133,7 +133,7 @@ def sum_regions(centroids, new_centroid_sums, rho, res_step, size):
   y_range = np.arange(res_step/2.0, imgy, res_step)
   point_matrix = list(itertools.product(x_range, y_range))
   nearest_nbr_indices = tree.query(point_matrix)[1]
-  for i in xrange(len(point_matrix)):
+  for i in range(len(point_matrix)):
     point = point_matrix[i]
     x = point[0]
     y = point[1]
@@ -176,7 +176,7 @@ def zero_lists(the_lists):
 # set every element in a list to zero
 #
 def zero_list(the_list):
-  for x in xrange( len(the_list) ):
+  for x in range( len(the_list) ):
     the_list[x] = 0
 
 #
